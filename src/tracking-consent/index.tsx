@@ -2,6 +2,18 @@ import { useLocalStorage } from "react-use";
 import React from "react";
 import { Helmet } from "react-helmet";
 
+function clearCookies() {
+  try {
+    document.cookie.split(";").forEach(function (cookie) {
+      document.cookie = cookie
+        .replace(/^ +/, "")
+        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+    });
+  } catch {
+    // try/catch in case something fails in different browsers
+  }
+}
+
 export function useTrackingConsent(localStorageKey: string) {
   const [hasConsented, setHasConsented, removeLocalStorageEntry] =
     useLocalStorage(localStorageKey, false);
@@ -10,8 +22,12 @@ export function useTrackingConsent(localStorageKey: string) {
     () => ({
       hasConsented: hasConsented ?? false,
       toggleConsent: () => {
-        if (hasConsented) removeLocalStorageEntry();
-        else setHasConsented(true);
+        if (hasConsented) {
+          clearCookies();
+          removeLocalStorageEntry();
+        } else {
+          setHasConsented(true);
+        }
       },
     }),
     [removeLocalStorageEntry, setHasConsented, hasConsented]
